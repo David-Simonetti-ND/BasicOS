@@ -58,6 +58,8 @@ init_32bits:   ; initialize the GDT
     ; set vga to be normal mode
     mov ax, 0x3
     int 0x10
+
+    call read_sector_from_disk
     
     cli               ; Clear interrupts to prevent unintended behavior
     lgdt [gdtr]       ; load address of gtd descriptor structure into gdtr register
@@ -70,6 +72,18 @@ init_32bits:   ; initialize the GDT
     sti               ; restore interrupts as we are in 32 bit protected mode now
     jmp CODE_SEG:b32  ; jump to our 32 bit code
  
+read_sector_from_disk:
+	mov ah, 0x02      ; instruct bios to read from disk
+	mov al, 0x5       ; read 2 sectors from disk
+	mov ch, 0x00      ; track/cylinder number
+    mov cl, 0x2       ; sector number (first sector is sector 1)
+    mov dh, 0x00      ; head number 0
+    xor bx, bx        ; clear out es
+    mov es, bx
+    mov bx, 7e00h     ; load the code 512 bytes past 0x7c00h
+	int 0x13          ; read sectors
+	ret
+
 bits 32 ; code is now 32 bit
 
 VIDEO_MEMORY equ 0xb8000     ; address of the start of video memory
@@ -104,11 +118,7 @@ b32:
 
     call test_A20           ; test to make sure the A20 line was set properly
 
-    mov ebx, Hello32
-    call print32
-
-    cli
-    hlt
+    jmp kernelstart
 
 ; Code taken from https://wiki.osdev.org/A20_Line
 ; Check A20 line
@@ -132,8 +142,10 @@ A20_off:
     cli 
     hlt
 
-Hello32 db 'Hello32', 0
+helloboot db "helloboot", 0
 A20error db "Unable to enable A20 line", 0
 
 times 510-($-$$) db 0 ; Add any additional zeroes to make 510 bytes in total
 dw 0xAA55 ; write the magic number 0x55aa at the end of the first 510 bytes
+
+%include "kernal.asm"
