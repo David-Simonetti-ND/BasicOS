@@ -74,7 +74,7 @@ init_32bits:   ; initialize the GDT
  
 read_sector_from_disk:
 	mov ah, 0x02      ; instruct bios to read from disk
-	mov al, 0x5       ; read 2 sectors from disk
+	mov al, 0x20       ; read 2 sectors from disk
 	mov ch, 0x00      ; track/cylinder number
     mov cl, 0x2       ; sector number (first sector is sector 1)
     mov dh, 0x00      ; head number 0
@@ -118,7 +118,7 @@ b32:
 
     call test_A20           ; test to make sure the A20 line was set properly
 
-    jmp kernelstart
+    jmp CODE_SEG:kernelstart
 
 ; Code taken from https://wiki.osdev.org/A20_Line
 ; Check A20 line
